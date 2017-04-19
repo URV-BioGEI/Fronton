@@ -84,7 +84,7 @@ int f_pil, c_pil;	/* posicio de la pilota, en valor enter */
 float pos_f, pos_c;	/* posicio de la pilota, en valor real */
 float vel_f, vel_c;	/* velocitat de la pilota, en valor real */
 int retard;		/* valor del retard de moviment, en mil.lisegons */
-pthread_t idpa, idpi;
+pthread_t idpa, idpi[9];
 char strin[65];		/* variable per a generar missatges de text */
 
 
@@ -315,6 +315,12 @@ int main(int n_args, char *ll_args[])
   }
   else retard = 100;		/* altrament, fixar retard per defecte */
 
+  printf("Quantes Pilotes voleu?[max 9]:\n"); 
+  int num_pilotes = getchar();
+  if(num_pilotes > 9){
+     num_pilotes = 9;
+  }
+
   printf("Joc del Fronto: prem RETURN per continuar:\n"); getchar();
 
   if (inicialitza_joc() !=0)	/* intenta crear el taulell de joc */
@@ -322,7 +328,11 @@ int main(int n_args, char *ll_args[])
 
 
   pthread_create(&idpa,NULL,mou_paleta,(void *) NULL);
-  pthread_create(&idpi,NULL,mou_pilota,(void *) index);
+  int j;
+  for(j = 0; j < num_pilotes; j++){
+    pthread_create(&idpi[j],NULL,mou_pilota,(void *) index);
+  }
+
   do			/********** bucle principal del joc **********/
   {	
 	win_retard(retard);		/* retard del joc */
