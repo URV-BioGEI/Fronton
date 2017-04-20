@@ -86,7 +86,7 @@ int f_pil, c_pil;	/* posicio de la pilota, en valor enter */
 float pos_f, pos_c;	/* posicio de la pilota, en valor real */
 float vel_f, vel_c;	/* velocitat de la pilota, en valor real */
 int retard;		/* valor del retard de moviment, en mil.lisegons */
-pthread_t idpa, idpi;
+pthread_t idpa, idpi[9];
 char strin[65];		/* variable per a generar missatges de text */
 pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER;   /* crea un sem. Global*/
 
@@ -216,54 +216,54 @@ void * mou_pilota(void * index)
     if (f_h != f_pil) 		/* provar rebot vertical */
     {	
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
-		rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
-		pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		if (rv != ' ')			/* si hi ha alguna cosa */
-		{   
-			vel_f = -vel_f;		/* canvia sentit velocitat vertical */
-	   	 	f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
-		}
+	rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	if (rv != ' ')			/* si hi ha alguna cosa */
+	{   
+	    vel_f = -vel_f;		/* canvia sentit velocitat vertical */
+	    f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
+	}
     }
     if (c_h != c_pil) 		/* provar rebot horitzontal */
     {	
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
     	rh = win_quincar(f_pil,c_h);	/* veure si hi ha algun obstacle */
     	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		if (rh != ' ')			/* si hi ha algun obstacle */
-		{    
-			vel_c = -vel_c;		/* canvia sentit vel. horitzontal */
-	    	c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
-		}
+	if (rh != ' ')			/* si hi ha algun obstacle */
+	{    
+	    vel_c = -vel_c;		/* canvia sentit vel. horitzontal */
+    	    c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
+	}
     }
     if ((f_h != f_pil) && (c_h != c_pil))	/* provar rebot diagonal */
     {	
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
     	rd = win_quincar(f_h,c_h);
     	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		if (rd != ' ')				/* si hi ha obstacle */
-		{    
-			vel_f = -vel_f; vel_c = -vel_c;	/* canvia sentit velocitats */
-	    	f_h = pos_f+vel_f;
-	     	c_h = pos_c+vel_c;		/* actualitza posicio entera */
-		}
+	if (rd != ' ')				/* si hi ha obstacle */
+	{    
+	    vel_f = -vel_f; vel_c = -vel_c;	/* canvia sentit velocitats */
+    	    f_h = pos_f+vel_f;
+     	    c_h = pos_c+vel_c;		/* actualitza posicio entera */
+	}
     }
     pthread_mutex_lock(&mutex);		/* tanca semafor */
     if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
     {					/* si no hi ha obstacle */
-		win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
-		pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		pos_f += vel_f; pos_c += vel_c;
-		f_pil = f_h; c_pil = c_h;		/* actualitza posicio actual */
-		if (c_pil != 0)	
-		{	 		/* si ho surt del taulell, */
-			pthread_mutex_lock(&mutex);		/* tanca semafor */
-			win_escricar(f_pil,c_pil,'1',INVERS); /* imprimeix pilota */
-			pthread_mutex_unlock(&mutex); 		/* obre semafor */
-		}  
-		else
-		{
-			result = 1;	/* codi de finalitzacio de partida */
-		}
+	win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	pos_f += vel_f; pos_c += vel_c;
+	f_pil = f_h; c_pil = c_h;		/* actualitza posicio actual */
+	if (c_pil != 0)	
+	{	 		/* si ho surt del taulell, */
+	    pthread_mutex_lock(&mutex);		/* tanca semafor */
+	    win_escricar(f_pil,c_pil,'1',INVERS); /* imprimeix pilota */
+	    pthread_mutex_unlock(&mutex); 		/* obre semafor */
+	}  
+	else
+	{
+	    result = 1;	/* codi de finalitzacio de partida */
+	}
     }
     else
     {
@@ -295,23 +295,23 @@ void * mou_paleta(void * nul)
 
     if ((tecla == TEC_AVALL) && ((f_pal+MIDA_PALETA)< n_fil-1))
     {
-  	  	pthread_mutex_lock(&mutex);		/* tanca semafor */
-		win_escricar(f_pal,c_pal,' ',NO_INV);	/* esborra primer bloc */
+  	pthread_mutex_lock(&mutex);		/* tanca semafor */
+	win_escricar(f_pal,c_pal,' ',NO_INV);	/* esborra primer bloc */
     	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		f_pal++;				/* actualitza posicio */
+	f_pal++;				/* actualitza posicio */
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
-		win_escricar(f_pal+MIDA_PALETA-1,c_pal,'0',INVERS); /*esc. ultim bloc*/
+	win_escricar(f_pal+MIDA_PALETA-1,c_pal,'0',INVERS); /*esc. ultim bloc*/
     	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
     }
     if ((tecla == TEC_AMUNT) && (f_pal> 1))
     {
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
-		win_escricar(f_pal+MIDA_PALETA-1,c_pal,' ',NO_INV); /*esborra ultim bloc*/
-		pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-		f_pal--;				/* actualitza posicio */
-  	  	pthread_mutex_lock(&mutex);		/* tanca semafor */
-		win_escricar(f_pal,c_pal,'0',INVERS);	/* escriure primer bloc */
-		pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	win_escricar(f_pal+MIDA_PALETA-1,c_pal,' ',NO_INV); /*esborra ultim bloc*/
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	f_pal--;				/* actualitza posicio */
+  	pthread_mutex_lock(&mutex);		/* tanca semafor */
+	win_escricar(f_pal,c_pal,'0',INVERS);	/* escriure primer bloc */
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
     }
     if (tecla == TEC_RETURN) result=1;		/* final per pulsacio RETURN */
   }
@@ -351,6 +351,12 @@ int main(int n_args, char *ll_args[])
   }
   else retard = 100;		/* altrament, fixar retard per defecte */
 
+  printf("Quantes Pilotes voleu?[max 9]:\n"); 
+  int num_pilotes = getchar();
+  if(num_pilotes > 9){
+     num_pilotes = 9;
+  }
+
   printf("Joc del Fronto: prem RETURN per continuar:\n"); getchar();
 
   if (inicialitza_joc() !=0)	/* intenta crear el taulell de joc */
@@ -358,7 +364,11 @@ int main(int n_args, char *ll_args[])
 
 
   pthread_create(&idpa,NULL,mou_paleta,(void *) NULL);
-  pthread_create(&idpi,NULL,mou_pilota,(void *) index);
+  int j;
+  for(j = 0; j < num_pilotes; j++){
+    pthread_create(&idpi[j],NULL,mou_pilota,(void *) index);
+  }
+
   do			/********** bucle principal del joc **********/
   {	
 	win_retard(retard);		/* retard del joc */
