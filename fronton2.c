@@ -21,9 +21,10 @@
 #include <string.h>
 #include "winsuport.h"	/* incloure definicions de funcions propies */
 #include <pthread.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <sys/types.h>
 #define MIDA_PALETA 4	/* definicions constants del programa */
+#define MAX_PILOTES 10
 
 			/* variables globals */
 char *descripcio[]={
@@ -42,7 +43,7 @@ char *descripcio[]={
 "     El primer argument ha de ser el nom d\'un fitxer de text amb la\n",
 "     configuracio de la partida, on la primera fila inclou informacio\n",
 "     del camp de joc (valors enters), i la segona fila indica posicio\n",
-"     i velocitat de la pilota (valors reals):\n", 
+"     i velocitat de la pilota (valors reals):\n",
 "          num_files  num_columnes  mida_porteria\n",
 "          pos_fila   pos_columna   vel_fila  vel_columna\n",
 "\n",
@@ -77,16 +78,16 @@ char *descripcio[]={
 "   llibreria de CURSES (qualsevol versio).\n",
 "\n",
 "*"};		/* final de la descripcio */
-
+int num_pilotes = 1;
 int fi1=0, fi2=0;
 int n_fil, n_col;       /* numero de files i columnes del taulell */
 int m_por;		/* mida de la porteria (en caracters) */
 int f_pal, c_pal;       /* posicio del primer caracter de la paleta */
-int f_pil, c_pil;	/* posicio de la pilota, en valor enter */
-float pos_f, pos_c;	/* posicio de la pilota, en valor real */
-float vel_f, vel_c;	/* velocitat de la pilota, en valor real */
+int f_pil[MAX_PILOTES], c_pil[MAX_PILOTES];	/* posicio de la pilota, en valor enter */
+float pos_f[MAX_PILOTES], pos_c[MAX_PILOTES];	/* posicio de la pilota, en valor real */
+float vel_f[MAX_PILOTES], vel_c[MAX_PILOTES];	/* velocitat de la pilota, en valor real */
 int retard;		/* valor del retard de moviment, en mil.lisegons */
-pthread_t idpa, idpi[9];
+pthread_t idpa, idpi[MAX_PILOTES];
 char strin[65];		/* variable per a generar missatges de text */
 pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER;   /* crea un sem. Global*/
 
@@ -98,43 +99,48 @@ pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER;   /* crea un sem. Global*/
 int carrega_configuracio(FILE *fit)
 {
   int ret=0;
-  
+  int p_count = 0;
   fscanf(fit,"%d %d %d\n",&n_fil,&n_col,&m_por);	   /* camp de joc */
-  fscanf(fit,"%f %f %f %f\n",&pos_f,&pos_c,&vel_f,&vel_c); /* pilota */
-  if ((n_fil!=0) || (n_col!=0))			/* si no dimensions maximes */
+  while (fscanf(fit,"%f %f %f %f\n",&pos_f[p_count],&pos_c[p_count],&vel_f[p_count],&vel_c[p_count]) == 4)/* pilota */
   {
-    if ((n_fil < 7) || (n_fil > 25) || (n_col < 10) || (n_col > 80))
-	ret=1;
-    else
-    if (m_por > n_fil-3)
-	ret=2;
-    else
-    if ((pos_f < 1) || (pos_f > n_fil-2) || (pos_c < 1) || (pos_c > n_col-1))
-	ret=3;
-  }
-  if ((vel_f < -1.0) || (vel_f > 1.0) || (vel_c < -1.0) || (vel_c > 1.0))
-  	ret=4;
-  
-  if (ret!=0)		/* si ha detectat algun error */
-  {
-    fprintf(stderr,"Error en fitxer de configuracio:\n");
-    switch (ret)
+    if ((n_fil!=0) || (n_col!=0))			/* si no dimensions maximes */
     {
-      case 1:	fprintf(stderr,"\tdimensions del camp de joc incorrectes:\n");
-		fprintf(stderr,"\tn_fil= %d \tn_col= %d\n",n_fil,n_col);
-		break;
-      case 2:	fprintf(stderr,"\tmida de la porteria incorrecta:\n");
-		fprintf(stderr,"\tm_por= %d\n",m_por);
-		break;
-      case 3:	fprintf(stderr,"\tposicio de la pilota incorrecta:\n");
-		fprintf(stderr,"\tpos_f= %.2f \tpos_c= %.2f\n",pos_f,pos_c);
-		break;
-      case 4:	fprintf(stderr,"\tvelocitat de la pilota incorrecta:\n");
-		fprintf(stderr,"\tvel_f= %.2f \tvel_c= %.2f\n",vel_f,vel_c);
-		break;
-     }
+      if ((n_fil < 7) || (n_fil > 25) || (n_col < 10) || (n_col > 80))
+  	ret=1;
+      else
+      if (m_por > n_fil-3)
+  	ret=2;
+      else
+      if ((pos_f[p_count] < 1) || (pos_f[p_count] > n_fil-2) || (pos_c[p_count] < 1) || (pos_c[p_count] > n_col-1))
+  	ret=3;
+    }
+    if ((vel_f[p_count] < -1.0) || (vel_f[p_count] > 1.0) || (vel_c[p_count] < -1.0) || (vel_c[p_count] > 1.0))
+    	ret=4;
+
+    if (ret!=0)		/* si ha detectat algun error */
+    {
+      fprintf(stderr,"Error en fitxer de configuracio:\n");
+      switch (ret)
+      {
+        case 1:	fprintf(stderr,"\tdimensions del camp de joc incorrectes:\n");
+  		fprintf(stderr,"\tn_fil= %d \tn_col= %d\n",n_fil,n_col);
+  		break;
+        case 2:	fprintf(stderr,"\tmida de la porteria incorrecta:\n");
+  		fprintf(stderr,"\tm_por= %d\n",m_por);
+  		break;
+        case 3:	fprintf(stderr,"\tposicio de la pilota incorrecta:\n");
+  		fprintf(stderr,"\tpos_f= %.2f \tpos_c= %.2f\n",pos_f[p_count],pos_c[p_count]);
+  		break;
+        case 4:	fprintf(stderr,"\tvelocitat de la pilota incorrecta:\n");
+  		fprintf(stderr,"\tvel_f= %.2f \tvel_c= %.2f\n",vel_f[p_count],vel_c[p_count]);
+  		break;
+       }
+       return(ret);
+    }
+    p_count++;
   }
   fclose(fit);
+  num_pilotes = p_count;
   return(ret);
 }
 
@@ -179,14 +185,15 @@ int inicialitza_joc(void)
   c_pal = 3;
   for (i=0; i< MIDA_PALETA; i++)       /* dibuixar paleta inicialment */
 	win_escricar(f_pal+i,c_pal,'0',INVERS);
-
-  if (pos_f > n_fil-1)
-	pos_f = n_fil-1;	/* limita posicio inicial de la pilota */
-  if (pos_c > n_col-1)
-	pos_c = n_col-1;
-  f_pil = pos_f;
-  c_pil = pos_c;			 /* dibuixar la pilota inicialment */
-  win_escricar(f_pil,c_pil,'1',INVERS);
+  for(i = 0; i < num_pilotes; i++){
+  if (pos_f[i] > n_fil-1)
+	pos_f[i] = n_fil-1;	/* limita posicio inicial de la pilota */
+  if (pos_c[i] > n_col-1)
+	pos_c[i] = n_col-1;
+  f_pil[i] = pos_f[i];
+  c_pil[i] = pos_c[i];			 /* dibuixar la pilota inicialment */
+  win_escricar(f_pil[i],c_pil[i],'1',INVERS);
+  }
 
   sprintf(strin,"Tecles: \'%c\'-> amunt, \'%c\'-> avall, RETURN-> sortir\n",
   							TEC_AMUNT,TEC_AVALL);
@@ -201,65 +208,65 @@ int inicialitza_joc(void)
 /* altrament retorna un 0 */
 void * mou_pilota(void * index)
 {
-
+  int num_pil = (int)index;
   int f_h, c_h, result;
   char rh,rv,rd;
        while (result!=1)
 {
-  f_h = pos_f+vel_f;		/* posicio hipotetica de la pilota (entera) */
-  c_h = pos_c+vel_c;
+  f_h = pos_f[num_pil]+vel_f[num_pil];		/* posicio hipotetica de la pilota (entera) */
+  c_h = pos_c[num_pil]+vel_c[num_pil];
   result = 0;			/* inicialment suposem que la pilota no surt */
   rh = rv = rd = ' ';
 
-  if ((f_h != f_pil) || (c_h != c_pil))
+  if ((f_h != f_pil[num_pil]) || (c_h != c_pil[num_pil]))
   {		/* si posicio hipotetica no coincideix amb la posicio actual */
-    if (f_h != f_pil) 		/* provar rebot vertical */
-    {	
+    if (f_h != f_pil[num_pil]) 		/* provar rebot vertical */
+    {
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
-	rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	rv = win_quincar(f_h,c_pil[num_pil]);	/* veure si hi ha algun obstacle */
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	if (rv != ' ')			/* si hi ha alguna cosa */
-	{   
-	    vel_f = -vel_f;		/* canvia sentit velocitat vertical */
-	    f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
+	{
+	    vel_f[num_pil] = -vel_f[num_pil];		/* canvia sentit velocitat vertical */
+	    f_h = pos_f[num_pil]+vel_f[num_pil];		/* actualitza posicio hipotetica */
 	}
     }
-    if (c_h != c_pil) 		/* provar rebot horitzontal */
-    {	
+    if (c_h != c_pil[num_pil]) 		/* provar rebot horitzontal */
+    {
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
-    	rh = win_quincar(f_pil,c_h);	/* veure si hi ha algun obstacle */
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+    	rh = win_quincar(f_pil[num_pil],c_h);	/* veure si hi ha algun obstacle */
+    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	if (rh != ' ')			/* si hi ha algun obstacle */
-	{    
-	    vel_c = -vel_c;		/* canvia sentit vel. horitzontal */
-    	    c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
+	{
+	    vel_c[num_pil] = -vel_c[num_pil];		/* canvia sentit vel. horitzontal */
+    	    c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio hipotetica */
 	}
     }
-    if ((f_h != f_pil) && (c_h != c_pil))	/* provar rebot diagonal */
-    {	
+    if ((f_h != f_pil[num_pil]) && (c_h != c_pil[num_pil]))	/* provar rebot diagonal */
+    {
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
     	rd = win_quincar(f_h,c_h);
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	if (rd != ' ')				/* si hi ha obstacle */
-	{    
-	    vel_f = -vel_f; vel_c = -vel_c;	/* canvia sentit velocitats */
-    	    f_h = pos_f+vel_f;
-     	    c_h = pos_c+vel_c;		/* actualitza posicio entera */
+	{
+	    vel_f[num_pil] = -vel_f[num_pil]; vel_c[num_pil] = -vel_c[num_pil];	/* canvia sentit velocitats */
+    	    f_h = pos_f[num_pil]+vel_f[num_pil];
+     	    c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio entera */
 	}
     }
     pthread_mutex_lock(&mutex);		/* tanca semafor */
     if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
     {					/* si no hi ha obstacle */
-	win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
-	pos_f += vel_f; pos_c += vel_c;
-	f_pil = f_h; c_pil = c_h;		/* actualitza posicio actual */
-	if (c_pil != 0)	
+	win_escricar(f_pil[num_pil],c_pil[num_pil],' ',NO_INV);  	/* esborra pilota */
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */
+	pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil];
+	f_pil[num_pil] = f_h; c_pil[num_pil] = c_h;		/* actualitza posicio actual */
+	if (c_pil[num_pil] != 0)
 	{	 		/* si ho surt del taulell, */
 	    pthread_mutex_lock(&mutex);		/* tanca semafor */
-	    win_escricar(f_pil,c_pil,'1',INVERS); /* imprimeix pilota */
+	    win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
 	    pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	}  
+	}
 	else
 	{
 	    result = 1;	/* codi de finalitzacio de partida */
@@ -267,14 +274,14 @@ void * mou_pilota(void * index)
     }
     else
     {
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
     }
 }
-else { pos_f += vel_f; pos_c += vel_c; }
+else { pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil]; }
  win_retard(retard);
  }
  fi2=1;
- 	
+
   return((void *) index);
 
 }
@@ -297,25 +304,25 @@ void * mou_paleta(void * nul)
     {
   	pthread_mutex_lock(&mutex);		/* tanca semafor */
 	win_escricar(f_pal,c_pal,' ',NO_INV);	/* esborra primer bloc */
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	f_pal++;				/* actualitza posicio */
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
 	win_escricar(f_pal+MIDA_PALETA-1,c_pal,'0',INVERS); /*esc. ultim bloc*/
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
     }
     if ((tecla == TEC_AMUNT) && (f_pal> 1))
     {
     	pthread_mutex_lock(&mutex);		/* tanca semafor */
 	win_escricar(f_pal+MIDA_PALETA-1,c_pal,' ',NO_INV); /*esborra ultim bloc*/
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	f_pal--;				/* actualitza posicio */
   	pthread_mutex_lock(&mutex);		/* tanca semafor */
 	win_escricar(f_pal,c_pal,'0',INVERS);	/* escriure primer bloc */
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */  
+	pthread_mutex_unlock(&mutex); 		/* obre semafor */
     }
     if (tecla == TEC_RETURN) result=1;		/* final per pulsacio RETURN */
   }
-  win_retard(retard);	
+  win_retard(retard);
 }
 	 fi1=1;
   return((void *) 0);
@@ -333,7 +340,7 @@ int main(int n_args, char *ll_args[])
   do fprintf(stderr,"%s",descripcio[i++]);	/* imprimeix descripcio */
     while (descripcio[i][0] != '*');		/* mentre no arribi al final */
     exit(1);
-  } 
+  }
 
   fit_conf = fopen(ll_args[1],"rt");		/* intenta obrir el fitxer */
   if (!fit_conf)
@@ -351,12 +358,6 @@ int main(int n_args, char *ll_args[])
   }
   else retard = 100;		/* altrament, fixar retard per defecte */
 
-  printf("Quantes Pilotes voleu?[max 9]:\n"); 
-  int num_pilotes = getchar();
-  if(num_pilotes > 9){
-     num_pilotes = 9;
-  }
-
   printf("Joc del Fronto: prem RETURN per continuar:\n"); getchar();
 
   if (inicialitza_joc() !=0)	/* intenta crear el taulell de joc */
@@ -366,11 +367,11 @@ int main(int n_args, char *ll_args[])
   pthread_create(&idpa,NULL,mou_paleta,(void *) NULL);
   int j;
   for(j = 0; j < num_pilotes; j++){
-    pthread_create(&idpi[j],NULL,mou_pilota,(void *) index);
+    pthread_create(&idpi[j],NULL,mou_pilota,(void *) j);
   }
 
   do			/********** bucle principal del joc **********/
-  {	
+  {
 	win_retard(retard);		/* retard del joc */
   } while (!fi1 && !fi2);
 
