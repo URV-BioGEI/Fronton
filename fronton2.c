@@ -79,7 +79,8 @@ char *descripcio[]={
 "\n",
 "*"};		/* final de la descripcio */
 int num_pilotes = 1;
-int fi1=0, fi2=0;
+int num_rebots;
+int fi1=0, fi2=0, fi3=0;
 int n_fil, n_col;       /* numero de files i columnes del taulell */
 int m_por;		/* mida de la porteria (en caracters) */
 int f_pal, c_pal;       /* posicio del primer caracter de la paleta */
@@ -100,7 +101,7 @@ int carrega_configuracio(FILE *fit)
 {
   int ret=0;
   int p_count = 0;
-  fscanf(fit,"%d %d %d\n",&n_fil,&n_col,&m_por);	   /* camp de joc */
+  fscanf(fit,"%d %d %d %d\n",&n_fil,&n_col,&m_por, &num_rebots);	   /* camp de joc */
   while (fscanf(fit,"%f %f %f %f\n",&pos_f[p_count],&pos_c[p_count],&vel_f[p_count],&vel_c[p_count]) == 4)/* pilota */
   {
     if ((n_fil!=0) || (n_col!=0))			/* si no dimensions maximes */
@@ -227,8 +228,17 @@ void * mou_pilota(void * index)
 	pthread_mutex_unlock(&mutex); 		/* obre semafor */
 	if (rv != ' ')			/* si hi ha alguna cosa */
 	{
+
 	    vel_f[num_pil] = -vel_f[num_pil];		/* canvia sentit velocitat vertical */
 	    f_h = pos_f[num_pil]+vel_f[num_pil];		/* actualitza posicio hipotetica */
+	    if(rv == '0'){
+            pthread_mutex_lock(&mutex);		/* tanca semafor */
+            num_rebots--;
+            if(num_rebots==0){
+                fi3=1;
+            }
+             pthread_mutex_unlock(&mutex); 		/* obre semafor */
+	    }
 	}
     }
     if (c_h != c_pil[num_pil]) 		/* provar rebot horitzontal */
@@ -258,24 +268,19 @@ void * mou_pilota(void * index)
     if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
     {					/* si no hi ha obstacle */
 	win_escricar(f_pil[num_pil],c_pil[num_pil],' ',NO_INV);  	/* esborra pilota */
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */
+		/* obre semafor */
 	pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil];
 	f_pil[num_pil] = f_h; c_pil[num_pil] = c_h;		/* actualitza posicio actual */
-	if (c_pil[num_pil] != 0)
-	{	 		/* si ho surt del taulell, */
-	    pthread_mutex_lock(&mutex);		/* tanca semafor */
-	    win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
-	    pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	}
-	else
-	{
-	    result = 1;	/* codi de finalitzacio de partida */
-	}
+        if (c_pil[num_pil] != 0)
+        {	 		/* si ho surt del taulell, */
+            win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
+        }
+        else
+        {
+            result = 1;	/* codi de finalitzacio de partida */
+        }
     }
-    else
-    {
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
-    }
+    pthread_mutex_unlock(&mutex); 		/* obre semafor */
 }
 else { pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil]; }
  win_retard(retard);
@@ -375,11 +380,13 @@ int main(int n_args, char *ll_args[])
   do			/********** bucle principal del joc **********/
   {
 	win_retard(retard);		/* retard del joc */
-  } while (!fi1 && !fi2);
+  } while (!fi1 && !fi2 && !fi3);
 
   win_fi();				/* tanca les curses */
   if (fi2) printf("Final joc perque la pilota ha sortit per la porteria!\n\n");
   else  printf("Final joc perque s'ha premut RETURN!\n\n");
+
+  printf("faltaven %d rebots\n", num_rebots);
 
   return(0);			/* retorna sense errors d'execucio */
 }
