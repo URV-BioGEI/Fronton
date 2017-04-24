@@ -296,7 +296,9 @@ void * mou_paleta(void * nul)
   result = 0;
   while (result!=1)
 {
+  pthread_mutex_lock(&mutex);		/* tanca semafor */
   tecla = win_gettec();
+  pthread_mutex_unlock(&mutex); 		/* obre semafor */
   if (tecla != 0)
   {
 
