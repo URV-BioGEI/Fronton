@@ -80,6 +80,7 @@ char *descripcio[]={
 "*"};		/* final de la descripcio */
 int num_pilotes = 1;
 int num_rebots;
+char caracter_paleta = ' ';
 int fi1=0, fi2=0, fi3=0;
 int n_fil, n_col;       /* numero de files i columnes del taulell */
 int m_por;		/* mida de la porteria (en caracters) */
@@ -184,8 +185,10 @@ int inicialitza_joc(void)
 
   f_pal = 1;			/* posicio inicial de la paleta per defecte */
   c_pal = 3;
-  for (i=0; i< MIDA_PALETA; i++)       /* dibuixar paleta inicialment */
+  for (i=0; i< MIDA_PALETA; i++){       /* dibuixar paleta inicialment */
 	win_escricar(f_pal+i,c_pal,'0',INVERS);
+	caracter_paleta = win_quincar(f_pal+i, c_pal);
+    }
   for(i = 0; i < num_pilotes; i++){
   if (pos_f[i] > n_fil-1)
 	pos_f[i] = n_fil-1;	/* limita posicio inicial de la pilota */
@@ -231,7 +234,7 @@ void * mou_pilota(void * index)
 
 	    vel_f[num_pil] = -vel_f[num_pil];		/* canvia sentit velocitat vertical */
 	    f_h = pos_f[num_pil]+vel_f[num_pil];		/* actualitza posicio hipotetica */
-	    if(rv == '0'){
+	    if(rv == caracter_paleta){
             pthread_mutex_lock(&mutex);		/* tanca semafor */
             num_rebots--;
             if(num_rebots==0){
