@@ -212,85 +212,103 @@ int inicialitza_joc(void)
 /* altrament retorna un 0 */
 void * mou_pilota(void * index)
 {
-  int num_pil = (int)index;
-  int f_h, c_h, result;
-  char rh,rv,rd;
-       while (result!=1)
-{
-  f_h = pos_f[num_pil]+vel_f[num_pil];		/* posicio hipotetica de la pilota (entera) */
-  c_h = pos_c[num_pil]+vel_c[num_pil];
-  result = 0;			/* inicialment suposem que la pilota no surt */
-  rh = rv = rd = ' ';
-
-  if ((f_h != f_pil[num_pil]) || (c_h != c_pil[num_pil]))
-  {		/* si posicio hipotetica no coincideix amb la posicio actual */
-    if (f_h != f_pil[num_pil]) 		/* provar rebot vertical */
-    {
-    	pthread_mutex_lock(&mutex);		/* tanca semafor */
-	rv = win_quincar(f_h,c_pil[num_pil]);	/* veure si hi ha algun obstacle */
-	pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	if (rv != ' ')			/* si hi ha alguna cosa */
+	int num_pil = (int)index;
+	int f_h, c_h, result;
+	char rh,rv,rd;
+	while (result!=1)
 	{
+		f_h = pos_f[num_pil]+vel_f[num_pil];		/* posicio hipotetica de la pilota (entera) */
+		c_h = pos_c[num_pil]+vel_c[num_pil];
+		result = 0;			/* inicialment suposem que la pilota no surt */
+		rh = rv = rd = ' ';
 
-	    vel_f[num_pil] = -vel_f[num_pil];		/* canvia sentit velocitat vertical */
-	    f_h = pos_f[num_pil]+vel_f[num_pil];		/* actualitza posicio hipotetica */
-	    if(rv == caracter_paleta){
-            pthread_mutex_lock(&mutex);		/* tanca semafor */
-            num_rebots--;
-            if(num_rebots==0){
-                fi3=1;
-            }
-             pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	    }
+		if ((f_h != f_pil[num_pil]) || (c_h != c_pil[num_pil]))
+		{		/* si posicio hipotetica no coincideix amb la posicio actual */
+			if (f_h != f_pil[num_pil]) 		/* provar rebot vertical */
+			{
+				pthread_mutex_lock(&mutex);		/* tanca semafor */
+				rv = win_quincar(f_h,c_pil[num_pil]);	/* veure si hi ha algun obstacle */
+				pthread_mutex_unlock(&mutex); 		/* obre semafor */
+				if (rv != ' ')			/* si hi ha alguna cosa */
+				{
+					if(rv == '0'){
+						pthread_mutex_lock(&mutex);		/* tanca semafor */
+						num_rebots--;
+						if(num_rebots==0){
+							fi3=1;
+						}
+						pthread_mutex_unlock(&mutex); 		/* obre semafor */
+					}
+					vel_f[num_pil] = -vel_f[num_pil];		/* canvia sentit velocitat vertical */
+					f_h = pos_f[num_pil]+vel_f[num_pil];		/* actualitza posicio hipotetica */
+				}
+			}
+			if (c_h != c_pil[num_pil]) 		/* provar rebot horitzontal */
+			{
+				pthread_mutex_lock(&mutex);		/* tanca semafor */
+				rh = win_quincar(f_pil[num_pil],c_h);	/* veure si hi ha algun obstacle */
+				pthread_mutex_unlock(&mutex); 		/* obre semafor */
+				if (rh != ' ')			/* si hi ha algun obstacle */
+				{
+					if(rh == '0'){
+						pthread_mutex_lock(&mutex);		/* tanca semafor */
+						num_rebots--;
+						if(num_rebots==0){
+							fi3=1;
+						}
+						pthread_mutex_unlock(&mutex); 		/* obre semafor */
+					}
+					vel_c[num_pil] = -vel_c[num_pil];		/* canvia sentit vel. horitzontal */
+					c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio hipotetica */
+				}
+			}
+			if ((f_h != f_pil[num_pil]) && (c_h != c_pil[num_pil]))	/* provar rebot diagonal */
+			{
+				pthread_mutex_lock(&mutex);		/* tanca semafor */
+				rd = win_quincar(f_h,c_h);
+				pthread_mutex_unlock(&mutex); 		/* obre semafor */
+				if (rd != ' ')				/* si hi ha obstacle */
+				{
+					if(rd == '0'){
+						pthread_mutex_lock(&mutex);		/* tanca semafor */
+						num_rebots--;
+						if(num_rebots==0){
+							fi3=1;
+						}
+						pthread_mutex_unlock(&mutex); 		/* obre semafor */
+					}
+					vel_f[num_pil] = -vel_f[num_pil]; vel_c[num_pil] = -vel_c[num_pil];	/* canvia sentit velocitats */
+					f_h = pos_f[num_pil]+vel_f[num_pil];
+					c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio entera */
+				}
+			}
+			pthread_mutex_lock(&mutex);		/* tanca semafor */
+			if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
+			{					/* si no hi ha obstacle */
+				win_escricar(f_pil[num_pil],c_pil[num_pil],' ',NO_INV);  	/* esborra pilota */
+				/* obre semafor */
+				pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil];
+				f_pil[num_pil] = f_h; c_pil[num_pil] = c_h;		/* actualitza posicio actual */
+				if (c_pil[num_pil] != 0)
+				{	 		/* si ho surt del taulell, */
+					win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
+				}
+				else
+				{
+					result = 1;	/* codi de finalitzacio de partida */
+				}
+			}
+			pthread_mutex_unlock(&mutex); 		/* obre semafor */
+		}
+		else { 
+			pos_f[num_pil] += vel_f[num_pil]; 
+			pos_c[num_pil] += vel_c[num_pil]; 
+		}
+		win_retard(retard);
 	}
-    }
-    if (c_h != c_pil[num_pil]) 		/* provar rebot horitzontal */
-    {
-    	pthread_mutex_lock(&mutex);		/* tanca semafor */
-    	rh = win_quincar(f_pil[num_pil],c_h);	/* veure si hi ha algun obstacle */
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	if (rh != ' ')			/* si hi ha algun obstacle */
-	{
-	    vel_c[num_pil] = -vel_c[num_pil];		/* canvia sentit vel. horitzontal */
-    	    c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio hipotetica */
-	}
-    }
-    if ((f_h != f_pil[num_pil]) && (c_h != c_pil[num_pil]))	/* provar rebot diagonal */
-    {
-    	pthread_mutex_lock(&mutex);		/* tanca semafor */
-    	rd = win_quincar(f_h,c_h);
-    	pthread_mutex_unlock(&mutex); 		/* obre semafor */
-	if (rd != ' ')				/* si hi ha obstacle */
-	{
-	    vel_f[num_pil] = -vel_f[num_pil]; vel_c[num_pil] = -vel_c[num_pil];	/* canvia sentit velocitats */
-    	    f_h = pos_f[num_pil]+vel_f[num_pil];
-     	    c_h = pos_c[num_pil]+vel_c[num_pil];		/* actualitza posicio entera */
-	}
-    }
-    pthread_mutex_lock(&mutex);		/* tanca semafor */
-    if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
-    {					/* si no hi ha obstacle */
-	win_escricar(f_pil[num_pil],c_pil[num_pil],' ',NO_INV);  	/* esborra pilota */
-		/* obre semafor */
-	pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil];
-	f_pil[num_pil] = f_h; c_pil[num_pil] = c_h;		/* actualitza posicio actual */
-        if (c_pil[num_pil] != 0)
-        {	 		/* si ho surt del taulell, */
-            win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
-        }
-        else
-        {
-            result = 1;	/* codi de finalitzacio de partida */
-        }
-    }
-    pthread_mutex_unlock(&mutex); 		/* obre semafor */
-}
-else { pos_f[num_pil] += vel_f[num_pil]; pos_c[num_pil] += vel_c[num_pil]; }
- win_retard(retard);
- }
- fi2=1;
+	fi2=1;
 
-  return((void *) index);
+	return((void *) index);
 
 }
 
@@ -373,7 +391,7 @@ int main(int n_args, char *ll_args[])
   if (inicialitza_joc() !=0)	/* intenta crear el taulell de joc */
      exit(4);	/* aborta si hi ha algun problema amb taulell */
 
-
+	//fprintf(stderr, "main_errors\n");
   pthread_create(&idpa,NULL,mou_paleta,(void *) NULL);
   int j;
   for(j = 0; j < num_pilotes; j++){
