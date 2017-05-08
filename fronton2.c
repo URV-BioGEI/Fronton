@@ -190,13 +190,13 @@ int inicialitza_joc(void)
 	caracter_paleta = win_quincar(f_pal+i, c_pal);
     }
   for(i = 0; i < num_pilotes; i++){
-  if (pos_f[i] > n_fil-1)
-	pos_f[i] = n_fil-1;	/* limita posicio inicial de la pilota */
-  if (pos_c[i] > n_col-1)
-	pos_c[i] = n_col-1;
-  f_pil[i] = pos_f[i];
-  c_pil[i] = pos_c[i];			 /* dibuixar la pilota inicialment */
-  win_escricar(f_pil[i],c_pil[i],'1',INVERS);
+	  if (pos_f[i] > n_fil-1)
+		pos_f[i] = n_fil-1;	/* limita posicio inicial de la pilota */
+	  if (pos_c[i] > n_col-1)
+		pos_c[i] = n_col-1;
+	  f_pil[i] = pos_f[i];
+	  c_pil[i] = pos_c[i];			 /* dibuixar la pilota inicialment */
+	  win_escricar(f_pil[i],c_pil[i],'1'+i,INVERS);
   }
 
   sprintf(strin,"Tecles: \'%c\'-> amunt, \'%c\'-> avall, RETURN-> sortir\n",
@@ -291,7 +291,7 @@ void * mou_pilota(void * index)
 				f_pil[num_pil] = f_h; c_pil[num_pil] = c_h;		/* actualitza posicio actual */
 				if (c_pil[num_pil] != 0)
 				{	 		/* si ho surt del taulell, */
-					win_escricar(f_pil[num_pil],c_pil[num_pil],'1',INVERS); /* imprimeix pilota */
+					win_escricar(f_pil[num_pil],c_pil[num_pil],'1'+num_pil,INVERS); /* imprimeix pilota */
 				}
 				else
 				{
