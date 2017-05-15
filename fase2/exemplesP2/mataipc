@@ -1,0 +1,2 @@
+	login=`echo $LOGNAME | cut -c 1-8`
+	ipcrm `ipcs | grep $login | awk '{print "-" $1,$2}'`
