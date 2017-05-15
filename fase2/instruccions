@@ -1,0 +1,25 @@
+fork()
+ crea una copia del proces que l'executa. Retorna l'id del procés fill en el procés pare i retorna 0 en el procés fill.
+
+execlp(String , String, String...)
+Es carrega el codi d'un procés i ho canvia pel qu ees passa per parametre (path del fitxer executable a carregar)
+
+ini_mem
+map_mem
+elim_mem
+
+Hem de canviar el winsuport per winsuport2.
+
+ini_sem (valor)
+elim_sem(id)
+waitS(id) = pthread.mutex_lock
+SignalS(id) = pthread.mutex_unlock
+
+Abans de començar a utilitzar processos hem de crear tots els reccursos, thread(s) (paleta), semafors etc. depsrés posem el porcoessos a correr.
+
+Busties
+
+ini_mis()
+elim_mis(id)
+sendM(id, missatge, ncaracters)
+receiveM(id, missatge) return int ncaracters
