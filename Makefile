@@ -14,3 +14,5 @@ fronton3 : fronton3.c winsuport.o winsuport.h
 winsuport.o : winsuport.c winsuport.h
 	gcc -c -Wall winsuport.c -o winsuport.o 
 
+memoria.o : memoria.c memoria.h
+	gcc -c -Wall memoria.c -o memoria.o
