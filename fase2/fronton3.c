@@ -322,7 +322,7 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 			sprintf (An_col, "%i", n_col);
 			sprintf (An_fil, "%i", n_fil);
 			sprintf (Aretard, "%i", retard);
-            fprintf(stderr, "\nPilota %s (abans de crear procés fill):\n%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win);
+            //fprintf(stderr, "\nPilota %s (abans de crear procés fill):\n%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win);
 			execlp("./pilota3", "pilota3", Anum_pil, vel_f, vel_c, f_pil, c_pil, pos_f, pos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win,(char *)0);
 			printf("error: No s'ha pogut executar el process fill %i \n", j);
 			exit(1);	/* Retornem error */
@@ -341,8 +341,9 @@ do		/********** bucle principal del joc **********/
 } while (!fi1 && !(*fi2) && ((*rebots)!=0));
 win_fi();				/* tanca les curses */
 if (*fi2) printf("Final joc perque la pilota ha sortit per la porteria!\n\n");
-else  printf("Final joc perque s'ha premut RETURN!\n\n");
-printf("faltaven %d rebots\n", *rebots);
+if (fi1)  printf("Final joc perque s'ha premut RETURN!\n\n");
+if (*rebots==0) {printf("Has fet tots els rebots! Has guanyat!!\n");}
+else {printf("faltaven %d rebots\n", *rebots);}
 return(0);			/* retorna sense errors d'execucio */
 
 }

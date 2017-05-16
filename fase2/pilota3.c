@@ -18,21 +18,21 @@ int main(int n_args, char *ll_args[]){
 	/* Variables locals */
 	int f_h, c_h;
 	char rh,rv,rd;
-    fprintf(stderr,"\nPilota %s (arguments rebuts):\n%s, %s, %s, %s, %s, %s, ",(ll_args[1]),(ll_args[2]),(ll_args[3]),(ll_args[4]),(ll_args[5]),(ll_args[6]), (ll_args[7]));
-    fprintf(stderr,"%s, %s, %s, %s, %s, %s\n",(ll_args[8]),(ll_args[9]),(ll_args[10]),(ll_args[11]), (ll_args[12]), (ll_args[13]));
+    //fprintf(stderr,"\nPilota %s (arguments rebuts):\n%s, %s, %s, %s, %s, %s, ",(ll_args[1]),(ll_args[2]),(ll_args[3]),(ll_args[4]),(ll_args[5]),(ll_args[6]), (ll_args[7]));
+   // fprintf(stderr,"%s, %s, %s, %s, %s, %s\n",(ll_args[8]),(ll_args[9]),(ll_args[10]),(ll_args[11]), (ll_args[12]), (ll_args[13]));
 
 	/* Variables passades per valor */
 	int num_pil = atoi(ll_args[1])-1;
-	float vel_f = atof (ll_args[2]);
-	float vel_c = atof (ll_args[3]);
-	int f_pil = atoi (ll_args[4]);
-	int c_pil = atoi (ll_args[5]);
-	float pos_f = atof (ll_args[6]);
-	float pos_c = atof (ll_args[7]);
+	float vel_f = 1;
+	float vel_c = 1;
+	int f_pil = 10;
+	int c_pil = 10;
+	float pos_f = 10.5;
+	float pos_c = 10.5;
 	int n_col = atoi (ll_args[8]);
 	int n_fil = atoi (ll_args[9]);
 	int retard = atoi (ll_args[10]);	/* Variables passades per parámetre */
-    fprintf(stderr, "Impressió de les variables locals que presenten el conflicte\n%f, %f, %i, %i, %f, %f\n ", vel_f, vel_c, f_pil, c_pil, pos_f, pos_c);
+   // fprintf(stderr, "Impressió de les variables locals que presenten el conflicte\n%f, %f, %i, %i, %f, %f\n ", vel_f, vel_c, f_pil, c_pil, pos_f, pos_c);
 
 	int rebotes = atoi (ll_args[11]);
 	int *num_rebots = map_mem(rebotes);		/* obtenir adres. de mem. compartida */
@@ -61,7 +61,7 @@ int main(int n_args, char *ll_args[]){
 				    f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
 				    if (rv == '0')
 				    {
-					(*num_rebots)++;
+					(*num_rebots)--;
                     }
 				}
             }
@@ -74,7 +74,7 @@ int main(int n_args, char *ll_args[]){
                 c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
                 if (rh == '0')
                 {
-                    (*num_rebots)++;
+                    (*num_rebots)--;
                 }
             }
         }
@@ -88,7 +88,7 @@ int main(int n_args, char *ll_args[]){
                 c_h = pos_c+vel_c;		/* actualitza posicio entera */
                 if (rd == '0')
                 {
-					(*num_rebots)++;
+					(*num_rebots)--;
                 }
             }
         }
