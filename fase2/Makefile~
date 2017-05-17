@@ -1,16 +1,21 @@
+all : memoria.o semafor.o missatge.o winsuport2.o pilota3 fronton3
+winsuport2.o : winsuport2.c winsuport2.h
+	gcc -Wall -c winsuport2.c -o winsuport2.o
 
-fronton0 : fronton0.c winsuport.o winsuport.h
-	gcc -Wall fronton0.c winsuport.o -o fronton0 -lcurses
+missatge.o : missatge.c missatge.h
+	gcc -c -Wall missatge.c -o missatge.o
 
-fronton1 : fronton1.c winsuport.o winsuport.h
-	gcc -Wall fronton1.c winsuport.o -o fronton1 -lcurses -lpthread
+semafor.o : semafor.c semafor.h
+	gcc -c -Wall semafor.c -o semafor.o
 
-fronton2 : fronton2.c winsuport.o winsuport.h
-	gcc -Wall fronton2.c winsuport.o -o fronton2 -lcurses -lpthread
+memoria.o : memoria.c memoria.h
+	gcc -c -Wall memoria.c -o memoria.o
 
-fronton3 : fronton3.c pilota3.c winsuport2.o winsuport.h
-	gcc -Wall fronton3.c pilota3.c winsuport2.o -o fronton3 -lcurses -lpthread
+pilota3 : pilota3.c winsuport2.o memoria.o
+	gcc -Wall pilota3.c winsuport2.o memoria.o semafor.o -o pilota3 -lcurses -lpthread
 
-winsuport.o : winsuport.c winsuport.h
-	gcc -c -Wall winsuport.c -o winsuport.o 
+fronton3 : fronton3.c winsuport2.o memoria.o missatge.o semafor.o 
+	gcc -Wall fronton3.c winsuport2.o missatge.o memoria.o semafor.o -o fronton3 -lcurses -lpthread
 
+clean: 
+	rm memoria.o semafor.o missatge.o fronton3 pilota3 winsuport2.o 

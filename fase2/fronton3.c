@@ -22,6 +22,9 @@
 
 #include "winsuport2.h"	/* incloure definicions de funcions propies */
 #include "memoria.h"
+#include "semafor.h"
+#include "missatge.h"
+
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -99,10 +102,14 @@ char strin[65];		/* variable per a generar missatges de text */
 void *p_win;		/* Variables del tauler */
 int id_win;
 pid_t tpid[MAX_PILOTES];		/* taula d'id dels processos fill */
-	int fin2, rebotes, *fi2, *rebots;
+int fin2, rebotes, *fi2, *rebots;
+int sem_rebots;	    
+int sem_fi2;
+char Aid_mis[MAX_PILOTES][10];
+int id_mis[MAX_PILOTES];
+char Anum_pil[25], Aretard[25], Afin2[25], Arebotes[25], An_col[25], An_fil[25], Aid_win[25], Asem_fi2[25], Asem_rebots[25], Anum_pilotes[25];
 
-char Anum_pil[25], Aretard[25], Afin2[25], Arebotes[25], An_col[25], An_fil[25], Aid_win[25];
-
+char Aid_mis1[25], Aid_mis2[25], Aid_mis3[25], Aid_mis4[25], Aid_mis5[25], Aid_mis6[25], Aid_mis7[25], Aid_mis8[25], Aid_mis9[25];
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
 /* el parametre ha de ser un punter a fitxer de text, posicionat al principi */
 /* la funcio tanca el fitxer, i retorna diferent de zero si hi ha problemes  */
@@ -192,15 +199,35 @@ int inicialitza_joc(void)
 	rebots = map_mem(rebotes);	/* obtenir adres. de mem. compartida */
 	*rebots = MAX_REBOTS;	/* inicialitza variable compartida */
 	sprintf (Arebotes, "%i", rebotes);
-
-/* Afegit!!! */
+	
+	/* Afegit!!! */
 	id_win = ini_mem(retwin);	/* crear zona mem. compartida */
 	p_win = map_mem(id_win);	/* obtenir adres. de mem. compartida */
 	win_set(p_win,n_fil,n_col);		/* crea acces a finestra oberta */
+	
+	/* FASE 4 semaforo, es un semaforo*/
+	sem_rebots = ini_sem(1);	    /* crear semafor IPC inicialment obert */
+	sem_fi2 = ini_sem(1);
+	sprintf(Asem_rebots,"%i",sem_rebots);	    /* convertir identificador sem. en string */
+	sprintf(Asem_fi2,"%i",sem_fi2);	    /* convertir identificador sem. en string */
+	
+	/* Bústies */
 
-
-
-
+	for (i = 0; i < num_pilotes ; i++)
+	{
+		id_mis[i] = ini_mis();	    /* crear una bustia IPC per cada pilota*/
+		fprintf(stderr, "\nPrimer: %i", id_mis[i]);
+	}
+	/* Ho volia fer passant una matriu però no m'he n'he sortit així que he tirat pel dret */
+	sprintf (Aid_mis1, "%i", id_mis[0]);
+	sprintf (Aid_mis2, "%i", id_mis[1]);
+	sprintf (Aid_mis3, "%i", id_mis[2]);
+	sprintf (Aid_mis4, "%i", id_mis[3]);
+	sprintf (Aid_mis5, "%i", id_mis[4]);
+	sprintf (Aid_mis6, "%i", id_mis[5]);
+	sprintf (Aid_mis7, "%i", id_mis[6]);
+	sprintf (Aid_mis8, "%i", id_mis[7]);
+	sprintf (Aid_mis9, "%i", id_mis[8]);	
 
   if (m_por > n_fil-2)
 	m_por = n_fil-2;	/* limita valor de la porteria */
@@ -313,6 +340,7 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 	    tpid[j] = fork();
 		if (tpid[j] == 0)		/* Procés fill */
 		{			/* Variables enviades per valor*/
+				
 			sprintf (Anum_pil, "%i", (j+1));	/* Li passem l'índex +1 perque comencem comptant desde 0 */
 			sprintf (Avel_f, "%f", vel_f[j]);
 			sprintf (Avel_c, "%f", vel_c[j]);
@@ -323,8 +351,9 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 			sprintf (An_col, "%i", n_col);
 			sprintf (An_fil, "%i", n_fil);
 			sprintf (Aretard, "%i", retard);
+			sprintf (Anum_pilotes, "%i", num_pilotes);
             //fprintf(stderr, "\nPilota %s (abans de crear procés fill):\n%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win);
-			execlp("./pilota3", "pilota3", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win,(char *)0);
+			execlp("./pilota3", "pilota3", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win, Asem_rebots, Asem_fi2, Anum_pilotes, Aid_mis1, Aid_mis2, Aid_mis3, Aid_mis4, Aid_mis5, Aid_mis6, Aid_mis7, Aid_mis8, Aid_mis9, (char *)0);
 			printf("error: No s'ha pogut executar el process fill %i \n", j);
 			exit(1);	/* Retornem error */
 			/*codi fill */
@@ -340,11 +369,17 @@ do		/********** bucle principal del joc **********/
     win_retard(retard);		/* retard del joc */
     win_update();			/* actualitza visualitzacio CURSES */
 } while (!fi1 && !(*fi2) && ((*rebots)!=0));
+/* Destrucció de recursos */
+//elim_sem(sem_fi2);
+//elim_sem(sem_rebots);
 win_fi();				/* tanca les curses */
 if (*fi2) printf("Final joc perque la pilota ha sortit per la porteria!\n\n");
 if (fi1)  printf("Final joc perque s'ha premut RETURN!\n\n");
 if (*rebots==0) {printf("Has fet tots els rebots! Has guanyat!!\n");}
 else {printf("faltaven %d rebots\n", *rebots);}
+/* waitS(sem_fi2);		 Enviem senyal de fi per als processos fills posant la variable fi2 a 1
+*fi2 = 1;
+signalS(sem_fi2); */
 return(0);			/* retorna sense errors d'execucio */
 
 }
