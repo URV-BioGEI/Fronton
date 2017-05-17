@@ -28,6 +28,7 @@
 
 #define MIDA_PALETA 4	/* definicions constants del programa */
 #define MAX_PILOTES 9
+#define MAX_REBOTS 5
 
 			/* variables globals */
 char *descripcio[]={
@@ -109,7 +110,7 @@ int carrega_configuracio(FILE *fit)
 {
   int ret=0;
   int p_count = 0;
-  fscanf(fit,"%d %d %d %d\n",&n_fil,&n_col,&m_por, &num_rebots);	   /* camp de joc */
+  fscanf(fit,"%d %d %d \n",&n_fil,&n_col,&m_por);	   /* camp de joc */
   while (!feof(fit))/* pilota */
   {
       fscanf(fit,"%f %f %f %f\n",&pos_f[p_count],&pos_c[p_count],&vel_f[p_count],&vel_c[p_count]);
@@ -189,7 +190,7 @@ int inicialitza_joc(void)
 
 	rebotes = ini_mem(sizeof(int)); 	/* Inicialitzem memoria compartida */
 	rebots = map_mem(rebotes);	/* obtenir adres. de mem. compartida */
-	*rebots = num_rebots;	/* inicialitza variable compartida */
+	*rebots = MAX_REBOTS;	/* inicialitza variable compartida */
 	sprintf (Arebotes, "%i", rebotes);
 
 /* Afegit!!! */
@@ -323,7 +324,7 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 			sprintf (An_fil, "%i", n_fil);
 			sprintf (Aretard, "%i", retard);
             //fprintf(stderr, "\nPilota %s (abans de crear procés fill):\n%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win);
-			execlp("./pilota3", "pilota3", Anum_pil, vel_f, vel_c, f_pil, c_pil, pos_f, pos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win,(char *)0);
+			execlp("./pilota3", "pilota3", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win,(char *)0);
 			printf("error: No s'ha pogut executar el process fill %i \n", j);
 			exit(1);	/* Retornem error */
 			/*codi fill */

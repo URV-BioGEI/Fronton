@@ -23,12 +23,12 @@ int main(int n_args, char *ll_args[]){
 
 	/* Variables passades per valor */
 	int num_pil = atoi(ll_args[1])-1;
-	float vel_f = 1;
-	float vel_c = 1;
-	int f_pil = 10;
-	int c_pil = 10;
-	float pos_f = 10.5;
-	float pos_c = 10.5;
+	float vel_f = atof (ll_args[2]);
+	float vel_c = atof (ll_args[3]);
+	int f_pil = atoi (ll_args[4]);
+	int c_pil = atoi (ll_args[5]);
+	float pos_f = atof (ll_args[6]);
+	float pos_c = atof (ll_args[7]);
 	int n_col = atoi (ll_args[8]);
 	int n_fil = atoi (ll_args[9]);
 	int retard = atoi (ll_args[10]);	/* Variables passades per parámetre */
