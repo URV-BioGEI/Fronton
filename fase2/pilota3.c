@@ -137,6 +137,7 @@ int main(int n_args, char *ll_args[]){
                 }
             }
         }
+	waitS(sem_rebots);		/* tanca semafor */
         if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
         {					/* si no hi ha obstacle */
             win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
@@ -152,6 +153,7 @@ int main(int n_args, char *ll_args[]){
 		signalS(sem_fi2);
             }
         }
+	signalS(sem_rebots); 		/* obre semafor */
     }
     else { pos_f += vel_f; pos_c += vel_c; }
     win_retard(retard);
