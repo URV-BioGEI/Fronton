@@ -216,7 +216,7 @@ int inicialitza_joc(void)
 	for (i = 0; i < num_pilotes ; i++)
 	{
 		id_mis[i] = ini_mis();	    /* crear una bustia IPC per cada pilota*/
-		fprintf(stderr, "\nPrimer: %i", id_mis[i]);
+		//fprintf(stderr, "\nPrimer: %i", id_mis[i]);
 	}
 	/* Ho volia fer passant una matriu però no m'he n'he sortit així que he tirat pel dret */
 	sprintf (Aid_mis1, "%i", id_mis[0]);
