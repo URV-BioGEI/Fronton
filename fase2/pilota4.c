@@ -59,7 +59,6 @@ int main(int n_args, char *ll_args[]){
 	for (i = 0; i < num_pilotes; i++)
 	{
 		id_mis[i] = atoi (ll_args[i + 17]);	// Carreguem els ids de les busties en un array de caracters
-		fprintf(stderr, "\nSegon: %i", id_mis[i]);
 	}
 	
 
@@ -108,7 +107,7 @@ int main(int n_args, char *ll_args[]){
 				char mis[2];
 				int pilota = atoi(rv);
 				sprintf(mis,"%c",(num_pil+'v'));
-				sendM(pilota,mis,2);
+				//sendM(pilota,mis,2);
 			}
 		}
 	}

@@ -370,8 +370,8 @@ do		/********** bucle principal del joc **********/
     win_update();			/* actualitza visualitzacio CURSES */
 } while (!fi1 && !(*fi2) && ((*rebots)!=0));
 /* Destrucció de recursos */
-elim_sem(sem_fi2);
-elim_sem(sem_rebots);
+//elim_sem(sem_fi2);
+//elim_sem(sem_rebots);
 win_fi();				/* tanca les curses */
 if (*fi2) printf("Final joc perque la pilota ha sortit per la porteria!\n\n");
 if (fi1)  printf("Final joc perque s'ha premut RETURN!\n\n");

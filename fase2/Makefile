@@ -1,4 +1,4 @@
-all : memoria.o semafor.o missatge.o winsuport2.o pilota3 fronton3
+all : memoria.o semafor.o missatge.o winsuport2.o pilota3 fronton3 pilota4 fronton4
 winsuport2.o : winsuport2.c winsuport2.h
 	gcc -Wall -c winsuport2.c -o winsuport2.o
 
@@ -24,4 +24,4 @@ fronton4 : fronton4.c winsuport2.o memoria.o missatge.o semafor.o
 	gcc -Wall fronton4.c winsuport2.o missatge.o memoria.o semafor.o -o fronton4 -lcurses -lpthread
 
 clean: 
-	rm memoria.o semafor.o missatge.o fronton3 pilota3 winsuport2.o 
+	rm memoria.o semafor.o missatge.o fronton3 pilota3 fronton4 pilota4 winsuport2.o 
