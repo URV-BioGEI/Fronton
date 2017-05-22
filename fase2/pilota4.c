@@ -59,7 +59,7 @@ int main(int n_args, char *ll_args[]){
 	for (i = 0; i < num_pilotes; i++)
 	{
 		id_mis[i] = atoi (ll_args[i + 17]);	// Carreguem els ids de les busties en un array de caracters
-		fprintf(stderr, "\nSegon: %i", id_mis[i]);
+		//fprintf(stderr, "\nSegon: %i", id_mis[i]);
 	}
 	
 
@@ -84,8 +84,10 @@ int main(int n_args, char *ll_args[]){
 	 INSTRUCCIONS PER AL SEMAFOR 
 	waitS(id_sem);		 tanca semafor 
 	signalS(id_sem); 		obre semafor */
+	
 	do
 	{
+		waitS(sem_rebots);
 		f_h = pos_f+vel_f;		/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c+vel_c;
 		rh = rv = rd = ' ';
@@ -100,16 +102,8 @@ int main(int n_args, char *ll_args[]){
 			f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
 			if (rv == '0')
 			{
-				waitS(sem_rebots);		/* tanca semafor */
 				(*num_rebots)--;
-				signalS(sem_rebots); 		/* obre semafor */
                     	}
-			else{
-				char mis[2];
-				int pilota = atoi(rv);
-				sprintf(mis,"%c",(num_pil+'v'));
-				sendM(pilota,mis,2);
-			}
 		}
 	}
             if (c_h != c_pil) 		/* provar rebot horitzontal */
@@ -121,9 +115,7 @@ int main(int n_args, char *ll_args[]){
                 c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
                 if (rh == '0')
                 {
-			waitS(sem_rebots);		/* tanca semafor */
 			(*num_rebots)--;
-			signalS(sem_rebots); 		/* obre semafor */
                 }
             }
         }
@@ -137,13 +129,11 @@ int main(int n_args, char *ll_args[]){
                 c_h = pos_c+vel_c;		/* actualitza posicio entera */
                 if (rd == '0')
                 {
-			waitS(sem_rebots);		/* tanca semafor */
 			(*num_rebots)--;
-			signalS(sem_rebots); 		/* obre semafor */
                 }
             }
         }
-	waitS(sem_rebots);		/* tanca semafor */
+	//waitS(sem_rebots);		/* tanca semafor */
         if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
         {					/* si no hi ha obstacle */
             win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
@@ -154,16 +144,16 @@ int main(int n_args, char *ll_args[]){
             }
             else
             {
-		waitS(sem_fi2);
                 (*fi2)=1;		/* final per sortir  */
-		signalS(sem_fi2);
             }
         }
-	signalS(sem_rebots); 		/* obre semafor */
+	
     }
     else { pos_f += vel_f; pos_c += vel_c; }
+	signalS(sem_rebots); 
     win_retard(retard);
 	}while (!(*fi2));
+			/* obre semafor */
 
 	return(0);			/* retorna sense errors d'execucio */
 }

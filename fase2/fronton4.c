@@ -216,7 +216,7 @@ int inicialitza_joc(void)
 	for (i = 0; i < num_pilotes ; i++)
 	{
 		id_mis[i] = ini_mis();	    /* crear una bustia IPC per cada pilota*/
-		fprintf(stderr, "\nPrimer: %i", id_mis[i]);
+		//fprintf(stderr, "\nPrimer: %i", id_mis[i]);
 	}
 	/* Ho volia fer passant una matriu però no m'he n'he sortit així que he tirat pel dret */
 	sprintf (Aid_mis1, "%i", id_mis[0]);
@@ -271,6 +271,7 @@ void * mou_paleta(void * nul)
     result = 0;
     while (result!=1)
     {
+	waitS(sem_rebots);
         tecla = win_gettec();
         if (tecla != 0)
         {
@@ -288,6 +289,7 @@ void * mou_paleta(void * nul)
             }
             if (tecla == TEC_RETURN) result=1;		/* final per pulsacio RETURN */
         }
+	signalS(sem_rebots); 
         win_retard(retard);
     }
 fi1=1;
