@@ -2,14 +2,17 @@
 #include <stdio.h>	/* incloure definicions de funcions estandard */
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include "winsuport2.h"	/* incloure definicions de funcions propies */
 #include "memoria.h"
 #include "semafor.h"
 #include "missatge.h"
 
+
 #define MIDA_PALETA 4	/* definicions constants del programa */
 #define MAX_PILOTES 9
 #define MAX_REBOTS 5
+
 /* funcio per moure la pilota: retorna un 1 si la pilota surt per la porteria,*/
 /* altrament retorna un 0 */
 
@@ -18,18 +21,33 @@ vel_f, vel_c,f_pil, c_pil, pos_f, pos_c
 Necessita rebre per parámetre:
 fi2, num_rebots
 */
+
+int num_pil;
+float vel_f, vel_c;
+int id_mis[MAX_PILOTES];
+int jocEnMarxa = 1;
+pthread_t tid; //Thread per la bustia
+pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER;	/* crea un sem. Global*/
+
+void * escolta_bustia(void *n_v){
+	char a1[20];	
+	while(jocEnMarxa==1){
+		receiveM(id_mis[num_pil], a1);
+	}
+	return n_v;
+}
+
 int main(int n_args, char *ll_args[]){
 
 	/* Variables locals */
 	int f_h, c_h, i;
 	char rh,rv,rd;
-    //fprintf(stderr,"\nPilota %s (arguments rebuts):\n%s, %s, %s, %s, %s, %s, ",(ll_args[1]),(ll_args[2]),(ll_args[3]),(ll_args[4]),(ll_args[5]),(ll_args[6]), (ll_args[7]));
-   // fprintf(stderr,"%s, %s, %s, %s, %s, %s\n",(ll_args[8]),(ll_args[9]),(ll_args[10]),(ll_args[11]), (ll_args[12]), (ll_args[13]));
 
 	/* Variables passades per valor */
-	int num_pil = atoi(ll_args[1])-1;
-	float vel_f = atof (ll_args[2]);
-	float vel_c = atof (ll_args[3]);
+	num_pil = atoi(ll_args[1])-1;
+	
+	vel_f = atof (ll_args[2]);
+	vel_c = atof (ll_args[3]);
 	int f_pil = atoi (ll_args[4]);
 	int c_pil = atoi (ll_args[5]);
 	float pos_f = atof (ll_args[6]);
@@ -37,7 +55,6 @@ int main(int n_args, char *ll_args[]){
 	int n_col = atoi (ll_args[8]);
 	int n_fil = atoi (ll_args[9]);
 	int retard = atoi (ll_args[10]);	/* Variables passades per parámetre */
-   // fprintf(stderr, "Impressió de les variables locals que presenten el conflicte\n%f, %f, %i, %i, %f, %f\n ", vel_f, vel_c, f_pil, c_pil, pos_f, pos_c);
 
 	int rebotes = atoi (ll_args[11]);
 	int *num_rebots = map_mem(rebotes);		/* obtenir adres. de mem. compartida */
@@ -54,13 +71,15 @@ int main(int n_args, char *ll_args[]){
 	int sem_fi2 = atoi(ll_args[15]);	    /* recupera id de semafor */
 
 	int num_pilotes = atoi (ll_args[16]);
-	//fprintf(stderr, "\nPilotes: %i", num_pilotes);
-	int id_mis[MAX_PILOTES];
+	pthread_mutex_init(&mutex, NULL);		/* inicialitza el semafor */
+
 	for (i = 0; i < num_pilotes; i++)
 	{
-		id_mis[i] = atoi (ll_args[i + 17]);	// Carreguem els ids de les busties en un array de caracters
-		//fprintf(stderr, "\nSegon: %i", id_mis[i]);
+		id_mis[i] = atoi(ll_args[i + 17]);	// Carreguem els ids de les busties en un array de caracters
 	}
+	
+	//Llançem thread bustia
+	pthread_create(&tid,NULL,escolta_bustia,(void *) num_pil);
 	
 
 /*	 INTENT PER A PASSAR UNA MATRIU...
@@ -88,6 +107,10 @@ int main(int n_args, char *ll_args[]){
 	do
 	{
 		waitS(sem_rebots);
+		char mis[2];
+		sprintf(mis,"%c",('a'));
+		int num_p = atoi(rd);
+		sendM(id_mis[num_pil],mis,2);
 		f_h = pos_f+vel_f;		/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c+vel_c;
 		rh = rv = rd = ' ';
@@ -133,7 +156,6 @@ int main(int n_args, char *ll_args[]){
                 }
             }
         }
-	//waitS(sem_rebots);		/* tanca semafor */
         if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
         {					/* si no hi ha obstacle */
             win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
@@ -154,7 +176,11 @@ int main(int n_args, char *ll_args[]){
     win_retard(retard);
 	}while (!(*fi2));
 			/* obre semafor */
-
+	char sortida['e'];
+	jocEnMarxa = 0;
+	sendM(id_mis[num_pil],sortida, 1 );
+	pthread_mutex_destroy(&mutex);		/* destrueix el semafor */
 	return(0);			/* retorna sense errors d'execucio */
 }
+
 
