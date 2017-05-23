@@ -38,7 +38,7 @@ void * escolta_bustia(void *n_v){
 		if(entrada[0]=='e'){
 			jocEnMarxa = 0;
 		}else{		
-			/*int pilota_t;
+			int pilota_t;
 			float vel_f_t;
 			float vel_c_t;
 			char direccio[1];
@@ -56,7 +56,7 @@ void * escolta_bustia(void *n_v){
 			if(direccio[0] == 'h'){
 				vel_f = vel_f_t;
 			}
-			pthread_mutex_unlock(&mutex);   */
+			pthread_mutex_unlock(&mutex);
 		}
 	}
 	return n_v;
@@ -176,11 +176,13 @@ int main(int n_args, char *ll_args[]){
 				{
 					(*num_rebots)--;
 		            	}else if (rv != '+'){
-					int pilota_rebot = num_pilota_func(rh)-1;
-					/*pthread_mutex_lock(&mutex);		
-					sprintf(missatge_enviar, "%i-%f-%f-v", num_pil, vel_f, vel_c);
-					sendM(id_mis[num_pil],missatge_enviar,100);
-					pthread_mutex_unlock(&mutex); 	*/	 
+					int pilota_rebot = num_pilota_func(rv);
+					if( pilota_rebot != -1){
+						pthread_mutex_lock(&mutex);		
+						sprintf(missatge_enviar, "%i-%f-%f-v", num_pil, vel_f, vel_c);
+						sendM(id_mis[num_pil],missatge_enviar,100);
+						pthread_mutex_unlock(&mutex); 
+					}
 				}else{	
 					//si és la vora
 				}
@@ -196,13 +198,17 @@ int main(int n_args, char *ll_args[]){
 		        if (rh == '0')
 		        {
 				(*num_rebots)--;
-		        }else{
-				/*int pilota_rebot = atoi(rh)-1;
-				pthread_mutex_lock(&mutex);		
-				sprintf(missatge_enviar, "%i-%f-%f-h", num_pil, vel_f, vel_c);
-				sendM(id_mis[num_pil],missatge_enviar,100);
-				pthread_mutex_unlock(&mutex); */		  
-			}
+		        }else if (rh != '+'){
+					int pilota_rebot = num_pilota_func(rh);
+					if( pilota_rebot != -1){
+						pthread_mutex_lock(&mutex);		
+						sprintf(missatge_enviar, "%i-%f-%f-h", num_pil, vel_f, vel_c);
+						sendM(id_mis[num_pil],missatge_enviar,100);
+						pthread_mutex_unlock(&mutex); 
+					}
+				}else{	
+					//si és la vora
+				}
 		    }
 		}
 		if ((f_h != f_pil) && (c_h != c_pil))	/* provar rebot diagonal */
@@ -216,13 +222,17 @@ int main(int n_args, char *ll_args[]){
 		        if (rd == '0')
 		        {
 				(*num_rebots)--;
-		        }else{
-				/*int pilota_rebot = atoi(rd)-1;
-				pthread_mutex_lock(&mutex);
-				sprintf(missatge_enviar, "%i-%f-%f-d", num_pil, vel_f, vel_c);
-				sendM(id_mis[num_pil],missatge_enviar,100);
-				pthread_mutex_unlock(&mutex); */
-			}
+		        }else if (rd != '+'){
+					int pilota_rebot = num_pilota_func(rd);
+					if( pilota_rebot != -1){
+						pthread_mutex_lock(&mutex);		
+						sprintf(missatge_enviar, "%i-%f-%f-d", num_pil, vel_f, vel_c);
+						sendM(id_mis[num_pil],missatge_enviar,100);
+						pthread_mutex_unlock(&mutex); 
+					}
+				}else{	
+					//si és la vora
+				}
 		    }
 		}
 		if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
