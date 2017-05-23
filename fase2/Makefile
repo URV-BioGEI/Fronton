@@ -21,7 +21,7 @@ pilota4 : pilota4.c winsuport2.o memoria.o missatge.o semafor.o
 	gcc -Wall pilota4.c winsuport2.o memoria.o semafor.o missatge.o -o pilota4 -lcurses -lpthread
 
 fronton4 : fronton4.c winsuport2.o memoria.o missatge.o semafor.o 
-	gcc -Wall fronton4.c winsuport2.o missatge.o memoria.o semafor.o missatge.o -o fronton4 -lcurses -lpthread
+	gcc -Wall fronton4.c winsuport2.o memoria.o semafor.o missatge.o -o fronton4 -lcurses -lpthread
 
 clean: 
 	rm memoria.o semafor.o missatge.o fronton4 pilota4 winsuport2.o 
