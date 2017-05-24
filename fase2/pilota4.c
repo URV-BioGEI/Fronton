@@ -35,26 +35,38 @@ void * escolta_bustia(void *n_v){
 	char entrada[100], sortida[100];	
 	while(jocEnMarxa==1){
 		receiveM(id_mis[num_pil], entrada);
+		fprintf(stderr,"entrada: %s\n", entrada);
 		if(entrada[0]=='e'){
 			jocEnMarxa = 0;
 		}else{		
 			int pilota_t;
-			float vel_f_t;
-			float vel_c_t;
-			char direccio[1];
-			sscanf(entrada, "%i-%f-%f-%s", &pilota_t, &vel_f_t, &vel_c_t, direccio);
+			pthread_mutex_lock(&mutex);
+			float vel_f_t = 0.0;
+			float vel_c_t = 0.0;
+			pthread_mutex_unlock(&mutex);
+			char direccio;
+			char resposta;
+			sscanf(entrada, "%i;%f;%f;%c;%c", &pilota_t, &vel_f_t, &vel_c_t, &direccio, &resposta);
+			fprintf(stderr,"entrada des : %i.%f.%f.%c.%c\n", pilota_t, vel_f_t, vel_c_t, direccio, resposta);
+			fprintf(stderr,"pilota llegida : %i; pilota actual: %i;resposta: %c\n", pilota_t, 1+num_pil, direccio);
 			pthread_mutex_lock(&mutex);		
-			sprintf(sortida, "%i-%f-%f-%s", num_pil, vel_f, vel_c, direccio);			
-			sendM(id_mis[pilota_t], sortida, 100);
-			if(direccio[0] == 'd'){
-				vel_f = vel_f_t;
-				vel_c = vel_c_t;
+			if(resposta == 's'){
+				fprintf(stderr,"responc missatge\n");
+				sprintf(sortida, "%i;%f;%f;%c;n", 1+num_pil, vel_f, vel_c, direccio);			
+				sendM(id_mis[pilota_t], sortida, 100);
 			}
-			if(direccio[0] == 'v'){
-				vel_c = vel_c_t;
+			if(direccio == 'd'){
+				//vel_f = vel_f_t;
+				//vel_c = vel_c_t;
+				fprintf(stderr,"xoc d\n");
 			}
-			if(direccio[0] == 'h'){
-				vel_f = vel_f_t;
+			if(direccio == 'v'){
+				//vel_c = vel_c_t;
+				fprintf(stderr,"xoc v\n");
+			}
+			if(direccio == 'h'){
+				//vel_f = vel_f_t;
+				fprintf(stderr,"xoc h\n");
 			}
 			pthread_mutex_unlock(&mutex);
 		}
@@ -152,7 +164,7 @@ int main(int n_args, char *ll_args[]){
 	 INSTRUCCIONS PER AL SEMAFOR 
 	waitS(id_sem);		 tanca semafor 
 	signalS(id_sem); 		obre semafor */
-	
+
 	do
 	{
 		pthread_mutex_lock(&mutex);		/* tanca semafor */
@@ -178,10 +190,11 @@ int main(int n_args, char *ll_args[]){
 					signalS(sem_rebots); 
 		            	}else if (rv != '+'){
 					int pilota_rebot = num_pilota_func(rv);
-					if( pilota_rebot != -1){
-						pthread_mutex_lock(&mutex);		
-						sprintf(missatge_enviar, "%i-%f-%f-v", num_pil, vel_f, vel_c);
-						sendM(id_mis[num_pil],missatge_enviar,100);
+					//fprintf(stderr,"rebot v : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					if( pilota_rebot != -1 && pilota_rebot != num_pil){
+						pthread_mutex_lock(&mutex);					
+						sprintf(missatge_enviar, "%i;%f;%f;v;s", num_pil, vel_f, vel_c);
+						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 						pthread_mutex_unlock(&mutex); 
 					}
 				}else{	
@@ -205,10 +218,11 @@ int main(int n_args, char *ll_args[]){
 				signalS(sem_rebots);
 		        }else if (rh != '+'){
 					int pilota_rebot = num_pilota_func(rh);
-					if( pilota_rebot != -1){
-						pthread_mutex_lock(&mutex);		
-						sprintf(missatge_enviar, "%i-%f-%f-h", num_pil, vel_f, vel_c);
-						sendM(id_mis[num_pil],missatge_enviar,100);
+					//fprintf(stderr,"rebot h : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					if( pilota_rebot != -1 && pilota_rebot != num_pil){
+						pthread_mutex_lock(&mutex);
+						sprintf(missatge_enviar, "%i;%f;%f;h;s", num_pil, vel_f, vel_c);
+						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 						pthread_mutex_unlock(&mutex); 
 					}
 				}else{	
@@ -233,10 +247,11 @@ int main(int n_args, char *ll_args[]){
 				signalS(sem_rebots);
 		        }else if (rd != '+'){
 					int pilota_rebot = num_pilota_func(rd);
-					if( pilota_rebot != -1){
+					//fprintf(stderr,"rebot d : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					if( pilota_rebot != -1 && pilota_rebot != num_pil){
 						pthread_mutex_lock(&mutex);		
-						sprintf(missatge_enviar, "%i-%f-%f-d", num_pil, vel_f, vel_c);
-						sendM(id_mis[num_pil],missatge_enviar,100);
+						sprintf(missatge_enviar, "%i;%f;%f;d;s", num_pil, vel_f, vel_c);
+						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 						pthread_mutex_unlock(&mutex); 
 					}
 				}else{	
@@ -265,7 +280,8 @@ int main(int n_args, char *ll_args[]){
     	win_retard(retard);
 	}while (!(*fi2));
 			/* obre semafor */
-	char sortida['e'];
+	char sortida[1];
+	sortida[0] = 'e';
 	jocEnMarxa = 0;
 	sendM(id_mis[num_pil],sortida, 1 );
 	pthread_mutex_destroy(&mutex);		/* destrueix el semafor */
