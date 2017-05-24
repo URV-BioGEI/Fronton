@@ -81,8 +81,6 @@ int num_pilota_func(char entrada){
 		return 8;	
 	}else if(entrada == '9'){
 		return 9;	
-	}else if(entrada == '10'){
-		return 10;	
 	}else{
 		return -1;
 	}
@@ -157,7 +155,6 @@ int main(int n_args, char *ll_args[]){
 	
 	do
 	{
-		waitS(sem_rebots);
 		pthread_mutex_lock(&mutex);		/* tanca semafor */
 		f_h = pos_f+vel_f;		/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c+vel_c;
@@ -167,14 +164,18 @@ int main(int n_args, char *ll_args[]){
 		{
 		if (f_h != f_pil) 		/* provar rebot vertical */
 		{
+			waitS(sem_rebots);
 		        rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
+			signalS(sem_rebots); 		
 			if (rv != ' ')			/* si hi ha alguna cosa */
 			{   
 				vel_f = -vel_f;		/* canvia sentit velocitat vertical */
 				f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
 				if (rv == '0')
 				{
+					waitS(sem_rebots);
 					(*num_rebots)--;
+					signalS(sem_rebots); 
 		            	}else if (rv != '+'){
 					int pilota_rebot = num_pilota_func(rv);
 					if( pilota_rebot != -1){
@@ -190,14 +191,18 @@ int main(int n_args, char *ll_args[]){
 		}
 		    if (c_h != c_pil) 		/* provar rebot horitzontal */
 		    {
+			waitS(sem_rebots);
 		    rh = win_quincar(f_pil,c_h);	/* veure si hi ha algun obstacle */
+			signalS(sem_rebots); 
 		    if (rh != ' ')			/* si hi ha algun obstacle */
 		    {
 		        vel_c = -vel_c;		/* canvia sentit vel. horitzontal */
 		        c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
 		        if (rh == '0')
 		        {
+				waitS(sem_rebots);
 				(*num_rebots)--;
+				signalS(sem_rebots);
 		        }else if (rh != '+'){
 					int pilota_rebot = num_pilota_func(rh);
 					if( pilota_rebot != -1){
@@ -213,7 +218,9 @@ int main(int n_args, char *ll_args[]){
 		}
 		if ((f_h != f_pil) && (c_h != c_pil))	/* provar rebot diagonal */
 		{
+			waitS(sem_rebots);
 		    rd = win_quincar(f_h,c_h);
+			signalS(sem_rebots);
 		    if (rd != ' ')				/* si hi ha obstacle */
 		    {
 		        vel_f = -vel_f; vel_c = -vel_c;	/* canvia sentit velocitats */
@@ -221,7 +228,9 @@ int main(int n_args, char *ll_args[]){
 		        c_h = pos_c+vel_c;		/* actualitza posicio entera */
 		        if (rd == '0')
 		        {
+				waitS(sem_rebots);
 				(*num_rebots)--;
+				signalS(sem_rebots);
 		        }else if (rd != '+'){
 					int pilota_rebot = num_pilota_func(rd);
 					if( pilota_rebot != -1){
@@ -235,6 +244,7 @@ int main(int n_args, char *ll_args[]){
 				}
 		    }
 		}
+		waitS(sem_rebots);
 		if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
 		{					/* si no hi ha obstacle */
 		    win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
@@ -248,10 +258,10 @@ int main(int n_args, char *ll_args[]){
 		        (*fi2)=1;		/* final per sortir  */
 		    }
 		}
+		signalS(sem_rebots);
 	
 	    }
     	else { pos_f += vel_f; pos_c += vel_c; }
-	signalS(sem_rebots); 
     	win_retard(retard);
 	}while (!(*fi2));
 			/* obre semafor */
