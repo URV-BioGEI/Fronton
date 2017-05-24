@@ -369,7 +369,9 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 do		/********** bucle principal del joc **********/
 {
     win_retard(retard);		/* retard del joc */
+    waitS(sem_rebots);
     win_update();			/* actualitza visualitzacio CURSES */
+    signalS(sem_rebots);
 } while (!fi1 && !(*fi2) && ((*rebots)!=0));
 /* Destrucció de recursos */
 //elim_sem(sem_fi2);
