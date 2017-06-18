@@ -47,25 +47,26 @@ void * escolta_bustia(void *n_v){
 			char direccio;
 			char resposta;
 			sscanf(entrada, "%i;%f;%f;%c;%c", &pilota_t, &vel_f_t, &vel_c_t, &direccio, &resposta);
-			fprintf(stderr,"entrada des : %i.%f.%f.%c.%c\n", pilota_t, vel_f_t, vel_c_t, direccio, resposta);
+			fprintf(stderr,"entrada des : %i;%f;%f;%c;%c\n", pilota_t, vel_f_t, vel_c_t, direccio, resposta);
 			fprintf(stderr,"pilota llegida : %i; pilota actual: %i;resposta: %c\n", pilota_t, 1+num_pil, direccio);
 			pthread_mutex_lock(&mutex);		
 			if(resposta == 's'){
 				fprintf(stderr,"responc missatge\n");
+				fprintf(stderr,"sortida: %i;%f;%f;%c;n\n", 1+num_pil, vel_f, vel_c, direccio);
 				sprintf(sortida, "%i;%f;%f;%c;n", 1+num_pil, vel_f, vel_c, direccio);			
-				sendM(id_mis[pilota_t], sortida, 100);
+				sendM(id_mis[pilota_t-1], sortida, 100);
 			}
 			if(direccio == 'd'){
-				//vel_f = vel_f_t;
-				//vel_c = vel_c_t;
+				vel_f = vel_f_t;
+				vel_c = vel_c_t;
 				fprintf(stderr,"xoc d\n");
 			}
 			if(direccio == 'v'){
-				//vel_c = vel_c_t;
+				vel_c = vel_c_t;
 				fprintf(stderr,"xoc v\n");
 			}
 			if(direccio == 'h'){
-				//vel_f = vel_f_t;
+				vel_f = vel_f_t;
 				fprintf(stderr,"xoc h\n");
 			}
 			pthread_mutex_unlock(&mutex);
@@ -74,29 +75,6 @@ void * escolta_bustia(void *n_v){
 	return n_v;
 }
 
-int num_pilota_func(char entrada){
-	if(entrada == '1'){
-		return 1;	
-	}else if(entrada == '2'){
-		return 2;	
-	}else if(entrada == '3'){
-		return 3;	
-	}else if(entrada == '4'){
-		return 4;	
-	}else if(entrada == '5'){
-		return 5;	
-	}else if(entrada == '6'){
-		return 6;	
-	}else if(entrada == '7'){
-		return 7;	
-	}else if(entrada == '8'){
-		return 8;	
-	}else if(entrada == '9'){
-		return 9;	
-	}else{
-		return -1;
-	}
-}
 
 int main(int n_args, char *ll_args[]){
 
@@ -129,7 +107,7 @@ int main(int n_args, char *ll_args[]){
 
 	win_set(p_win,n_fil,n_col);	/* crea acces a finestra oberta pel proces pare */
 	int sem_rebots = atoi(ll_args[14]);	    /* recupera id de semafor */
-	int sem_fi2 = atoi(ll_args[15]);	    /* recupera id de semafor */
+	int sem_win = atoi(ll_args[15]);	    /* recupera id de semafor */
 
 	int num_pilotes = atoi (ll_args[16]);
 	pthread_mutex_init(&mutex, NULL);		/* inicialitza el semafor */
@@ -139,7 +117,7 @@ int main(int n_args, char *ll_args[]){
 		id_mis[i] = atoi(ll_args[i + 17]);	// Carreguem els ids de les busties en un array de caracters
 	}
 	
-	//Llançem thread bustia
+	//Llancem thread bustia
 	pthread_create(&tid,NULL,escolta_bustia,(void *) num_pil);
 	
 
@@ -176,26 +154,28 @@ int main(int n_args, char *ll_args[]){
 		{
 		if (f_h != f_pil) 		/* provar rebot vertical */
 		{
-			waitS(sem_rebots);
-		        rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
-			signalS(sem_rebots); 		
+			waitS(sem_win);
+		    rv = win_quincar(f_h,c_pil);	/* veure si hi ha algun obstacle */
+			signalS(sem_win); 		
 			if (rv != ' ')			/* si hi ha alguna cosa */
 			{   
+				pthread_mutex_lock(&mutex);
 				vel_f = -vel_f;		/* canvia sentit velocitat vertical */
 				f_h = pos_f+vel_f;		/* actualitza posicio hipotetica */
+				pthread_mutex_unlock(&mutex);
 				if (rv == '0')
 				{
 					waitS(sem_rebots);
 					(*num_rebots)--;
 					signalS(sem_rebots); 
 		            	}else if (rv != '+'){
-					int pilota_rebot = num_pilota_func(rv);
-					//fprintf(stderr,"rebot v : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					int pilota_rebot = (int)'1'+rv;
+					fprintf(stderr,"rebot v : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
 					if( pilota_rebot != -1 && pilota_rebot != num_pil){
 						pthread_mutex_lock(&mutex);					
 						sprintf(missatge_enviar, "%i;%f;%f;v;s", num_pil, vel_f, vel_c);
-						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 						pthread_mutex_unlock(&mutex); 
+						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 					}
 				}else{	
 					//si és la vora
@@ -204,26 +184,28 @@ int main(int n_args, char *ll_args[]){
 		}
 		    if (c_h != c_pil) 		/* provar rebot horitzontal */
 		    {
-			waitS(sem_rebots);
+			waitS(sem_win);
 		    rh = win_quincar(f_pil,c_h);	/* veure si hi ha algun obstacle */
-			signalS(sem_rebots); 
+			signalS(sem_win); 
 		    if (rh != ' ')			/* si hi ha algun obstacle */
 		    {
+				pthread_mutex_lock(&mutex);
 		        vel_c = -vel_c;		/* canvia sentit vel. horitzontal */
 		        c_h = pos_c+vel_c;		/* actualitza posicio hipotetica */
+				pthread_mutex_unlock(&mutex);
 		        if (rh == '0')
 		        {
 				waitS(sem_rebots);
 				(*num_rebots)--;
 				signalS(sem_rebots);
 		        }else if (rh != '+'){
-					int pilota_rebot = num_pilota_func(rh);
-					//fprintf(stderr,"rebot h : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					int pilota_rebot = (int)'1'+rh;
+					fprintf(stderr,"rebot h : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
 					if( pilota_rebot != -1 && pilota_rebot != num_pil){
 						pthread_mutex_lock(&mutex);
 						sprintf(missatge_enviar, "%i;%f;%f;h;s", num_pil, vel_f, vel_c);
-						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
 						pthread_mutex_unlock(&mutex); 
+						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);						
 					}
 				}else{	
 					//si és la vora
@@ -232,38 +214,42 @@ int main(int n_args, char *ll_args[]){
 		}
 		if ((f_h != f_pil) && (c_h != c_pil))	/* provar rebot diagonal */
 		{
-			waitS(sem_rebots);
+			waitS(sem_win);
 		    rd = win_quincar(f_h,c_h);
-			signalS(sem_rebots);
+			signalS(sem_win);
 		    if (rd != ' ')				/* si hi ha obstacle */
 		    {
+				pthread_mutex_lock(&mutex);
 		        vel_f = -vel_f; vel_c = -vel_c;	/* canvia sentit velocitats */
 		        f_h = pos_f+vel_f;
 		        c_h = pos_c+vel_c;		/* actualitza posicio entera */
+				pthread_mutex_unlock(&mutex);
 		        if (rd == '0')
 		        {
 				waitS(sem_rebots);
 				(*num_rebots)--;
 				signalS(sem_rebots);
 		        }else if (rd != '+'){
-					int pilota_rebot = num_pilota_func(rd);
-					//fprintf(stderr,"rebot d : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
+					int pilota_rebot = (int)'1'+rd;
+					fprintf(stderr,"rebot d : %i; pilota actual: %i;\n", pilota_rebot, num_pil);
 					if( pilota_rebot != -1 && pilota_rebot != num_pil){
 						pthread_mutex_lock(&mutex);		
 						sprintf(missatge_enviar, "%i;%f;%f;d;s", num_pil, vel_f, vel_c);
+						pthread_mutex_unlock(&mutex);
 						sendM(id_mis[pilota_rebot-1],missatge_enviar,100);
-						pthread_mutex_unlock(&mutex); 
 					}
 				}else{	
 					//si és la vora
 				}
 		    }
 		}
-		waitS(sem_rebots);
+		waitS(sem_win);
 		if (win_quincar(f_h,c_h) == ' ')	/* verificar posicio definitiva */
 		{					/* si no hi ha obstacle */
 		    win_escricar(f_pil,c_pil,' ',NO_INV);  	/* esborra pilota */
-		    pos_f += vel_f; pos_c += vel_c;
+			pthread_mutex_lock(&mutex);		    
+			pos_f += vel_f; pos_c += vel_c;
+			pthread_mutex_unlock(&mutex);
 		    f_pil = f_h; c_pil = c_h;		/* actualitza posicio actual */
 		    if (c_pil != 0){	 		/* si ho surt del taulell, */
 		        win_escricar(f_pil,c_pil, '1'+num_pil ,INVERS); /* imprimeix pilota */
@@ -273,10 +259,14 @@ int main(int n_args, char *ll_args[]){
 		        (*fi2)=1;		/* final per sortir  */
 		    }
 		}
-		signalS(sem_rebots);
+		signalS(sem_win);
 	
 	    }
-    	else { pos_f += vel_f; pos_c += vel_c; }
+    	else { 
+			pthread_mutex_lock(&mutex);
+			pos_f += vel_f; pos_c += vel_c; 
+			pthread_mutex_unlock(&mutex);
+		}
     	win_retard(retard);
 	}while (!(*fi2));
 			/* obre semafor */
@@ -284,6 +274,7 @@ int main(int n_args, char *ll_args[]){
 	sortida[0] = 'e';
 	jocEnMarxa = 0;
 	sendM(id_mis[num_pil],sortida, 1 );
+	
 	pthread_mutex_destroy(&mutex);		/* destrueix el semafor */
 	return(0);			/* retorna sense errors d'execucio */
 }

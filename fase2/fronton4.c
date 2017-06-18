@@ -104,10 +104,10 @@ int id_win;
 pid_t tpid[MAX_PILOTES];		/* taula d'id dels processos fill */
 int fin2, rebotes, *fi2, *rebots;
 int sem_rebots;	    
-int sem_fi2;
+int sem_win;
 char Aid_mis[MAX_PILOTES][10];
 int id_mis[MAX_PILOTES];
-char Anum_pil[25], Aretard[25], Afin2[25], Arebotes[25], An_col[25], An_fil[25], Aid_win[25], Asem_fi2[25], Asem_rebots[25], Anum_pilotes[25];
+char Anum_pil[25], Aretard[25], Afin2[25], Arebotes[25], An_col[25], An_fil[25], Aid_win[25], Asem_win[25], Asem_rebots[25], Anum_pilotes[25];
 
 char Aid_mis1[25], Aid_mis2[25], Aid_mis3[25], Aid_mis4[25], Aid_mis5[25], Aid_mis6[25], Aid_mis7[25], Aid_mis8[25], Aid_mis9[25];
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
@@ -207,9 +207,9 @@ int inicialitza_joc(void)
 	
 	/* FASE 4 semaforo, es un semaforo*/
 	sem_rebots = ini_sem(1);	    /* crear semafor IPC inicialment obert */
-	sem_fi2 = ini_sem(1);
+	sem_win = ini_sem(1);
 	sprintf(Asem_rebots,"%i",sem_rebots);	    /* convertir identificador sem. en string */
-	sprintf(Asem_fi2,"%i",sem_fi2);	    /* convertir identificador sem. en string */
+	sprintf(Asem_win,"%i",sem_win);	    /* convertir identificador sem. en string */
 	
 	/* Bústies */
 
@@ -271,25 +271,36 @@ void * mou_paleta(void * nul)
     result = 0;
     while (result!=1)
     {
-	waitS(sem_rebots);
+	
         tecla = win_gettec();
         if (tecla != 0)
         {
             if ((tecla == TEC_AVALL) && ((f_pal+MIDA_PALETA)< n_fil-1))
             {
+				waitS(sem_win);
                 win_escricar(f_pal,c_pal,' ',NO_INV);	/* esborra primer bloc */
+				signalS(sem_win); 
+
                 f_pal++;				/* actualitza posicio */
+				
+				waitS(sem_win);
                 win_escricar(f_pal+MIDA_PALETA-1,c_pal,'0',INVERS); /*esc. ultim bloc*/
+				signalS(sem_win); 
             }
             if ((tecla == TEC_AMUNT) && (f_pal> 1))
             {
+				waitS(sem_win);		
                 win_escricar(f_pal+MIDA_PALETA-1,c_pal,' ',NO_INV); /*esborra ultim bloc*/
+				signalS(sem_win); 
+
                 f_pal--;				/* actualitza posicio */
+				
+				waitS(sem_win);
                 win_escricar(f_pal,c_pal,'0',INVERS);	/* escriure primer bloc */
+				signalS(sem_win); 
             }
             if (tecla == TEC_RETURN) result=1;		/* final per pulsacio RETURN */
         }
-	signalS(sem_rebots); 
         win_retard(retard);
     }
 fi1=1;
@@ -355,7 +366,7 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 			sprintf (Aretard, "%i", retard);
 			sprintf (Anum_pilotes, "%i", num_pilotes);
             //fprintf(stderr, "\nPilota %s (abans de crear procés fill):\n%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win);
-			execlp("./pilota4", "pilota4", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win, Asem_rebots, Asem_fi2, Anum_pilotes, Aid_mis1, Aid_mis2, Aid_mis3, Aid_mis4, Aid_mis5, Aid_mis6, Aid_mis7, Aid_mis8, Aid_mis9, (char *)0);
+			execlp("./pilota4", "pilota4", Anum_pil, Avel_f, Avel_c, Af_pil, Ac_pil, Apos_f, Apos_c, An_col, An_fil, Aretard, Arebotes, Afin2, Aid_win, Asem_rebots, Asem_win, Anum_pilotes, Aid_mis1, Aid_mis2, Aid_mis3, Aid_mis4, Aid_mis5, Aid_mis6, Aid_mis7, Aid_mis8, Aid_mis9, (char *)0);
 			printf("error: No s'ha pogut executar el process fill %i \n", j);
 			exit(1);	/* Retornem error */
 			/*codi fill */
@@ -369,21 +380,30 @@ if ((n_args != 2) && (n_args !=3))	/* si numero d'arguments incorrecte */
 do		/********** bucle principal del joc **********/
 {
     win_retard(retard);		/* retard del joc */
-    waitS(sem_rebots);
+    waitS(sem_win);
     win_update();			/* actualitza visualitzacio CURSES */
-    signalS(sem_rebots);
+    signalS(sem_win);
 } while (!fi1 && !(*fi2) && ((*rebots)!=0));
-/* Destrucció de recursos */
-//elim_sem(sem_fi2);
-//elim_sem(sem_rebots);
 win_fi();				/* tanca les curses */
 if (*fi2) printf("Final joc perque la pilota ha sortit per la porteria!\n\n");
 if (fi1)  printf("Final joc perque s'ha premut RETURN!\n\n");
 if (*rebots==0) {printf("Has fet tots els rebots! Has guanyat!!\n");}
 else {printf("faltaven %d rebots\n", *rebots);}
-/* waitS(sem_fi2);		 Enviem senyal de fi per als processos fills posant la variable fi2 a 1
-*fi2 = 1;
-signalS(sem_fi2); */
+	 
+*fi2 = 1;		//Enviem senyal de fi per als processos fills posant la variable fi2 a 1
+
+int t;
+for( j = 0; j < num_pilotes; j++)
+{
+	waitpid(tpid[j],&t,NULL);
+/* espera finalitzacio d'un fill */
+}
+pthread_join(idpa, (void **)&t);
+
+/* Destrucció de recursos */
+elim_sem(sem_win);
+elim_sem(sem_rebots);
+printf("Tots els processos han acabat\n");
 return(0);			/* retorna sense errors d'execucio */
 
 }
